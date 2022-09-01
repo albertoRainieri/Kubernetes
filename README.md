@@ -1,15 +1,12 @@
+## Create Kubernetes Cluster with Vagrant
 This guide will help you to deploy a kubernetes cluster locally.
 
-# download vagrant
+# Download vagrant
 First of all, download Vagrant. Vagrant will help you manage the cluster creation through Vagrantfile
 Visit https://www.vagrantup.com/downloads, and follow the download instructions.
 
-# download VirtualBox
+# Download VirtualBox
 Download VirtualBox on https://www.virtualbox.org/wiki/Downloads
-
-
-# kubernetes_init
-Create Kubernetes Cluster with Vagrant
 
 # Create Cluster
 vagrant up
