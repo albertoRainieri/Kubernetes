@@ -14,6 +14,6 @@ apt install -y docker.io
 apt-get -y install net-tools
 apt install -y nfs-common
 
-sudo su vagrant
-sudo usermod -aG docker $USER
-sudo chown vagrant:vagrant /var/run/docker.sock
+# sudo su vagrant
+# sudo usermod -aG docker $USER
+# sudo chown vagrant:vagrant /var/run/docker.sock

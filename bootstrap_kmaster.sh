@@ -8,13 +8,10 @@ kubeadm config images pull #>/dev/null 2>&1
 echo "[TASK 2] Initialize Kubernetes Cluster"
 kubeadm init --apiserver-advertise-address=192.168.59.100 --pod-network-cidr=192.168.60.0/24 #>> /root/kubeinit.log #2>/dev/null
 
-echo "[TASK 3] Deploy Flannel network"
-sudo su vagrant
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-export KUBECONFIG=/etc/kubernetes/admin.conf
-kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+echo "[TASK 3] Deploy Calico network"
+
+curl https://docs.projectcalico.org/manifests/calico.yaml -O
+kubectl apply -f calico.yaml
 
 echo "[TASK 4] Generate and save cluster join command to /joincluster.sh"
 kubeadm token create --print-join-command > /joincluster.sh #2>/dev/null
@@ -26,10 +23,10 @@ apt-get -y install net-tools
 apt install nfs-kernel-server
 
 echo "[TASK 6] Give vagrant User sudo priviliges for kubectl and docker"
-sudo su vagrant
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+# sudo su vagrant
+# mkdir -p $HOME/.kube
+# sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+# sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-sudo usermod -aG docker $USER
-sudo chown vagrant:vagrant /var/run/docker.sock
+# sudo usermod -aG docker $USER
+# sudo chown vagrant:vagrant /var/run/docker.sock
