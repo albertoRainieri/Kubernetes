@@ -10,10 +10,28 @@ bash /joincluster.sh
 
 echo "[TASK 2] Install docker and login to remote repository"
 apt update
-apt install -y docker.io
 apt-get -y install net-tools
 apt install -y nfs-common
 
-# sudo su vagrant
-# sudo usermod -aG docker $USER
-# sudo chown vagrant:vagrant /var/run/docker.sock
+echo "[TASK 3] Install DOcker"
+# Update the apt package index and install packages to allow apt to use a repository over HTTPS:
+apt-get update
+apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+# Add Docker’s official GPG key:    
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+#Use the following command to set up the repository:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+#Use the following command to set up the repository:
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
