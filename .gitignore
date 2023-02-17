@@ -1,0 +1,7 @@
+Vagrant/.vagrant/
+Vagrant/.idea
+Vagrant/auth_docker/
+Ansible_HA/*.log
+Ansible_HA/.vagrant
+Ansible/*.log
+Ansible/.vagrant

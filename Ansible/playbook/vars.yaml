@@ -1,0 +1,8 @@
+ansible_user: vagrant
+ansible_controller_path: /home/alberto/Kubernetes/vagrant_ansible
+ansible_controller_root_path: /home/alberto
+ansible_node_path: /home/vagrant
+ip_master: 192.168.59.100
+ip_worker1: 192.168.59.111
+ip_worker2: 192.168.59.112
+subnet_pod: 192.168.60.0/24

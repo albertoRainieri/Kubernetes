@@ -1,0 +1,104 @@
+---
+- hosts: "masters"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  
+
+  tasks:
+    - name: Include Variables
+      ansible.builtin.include_vars:
+        vars.yaml
+
+  
+    - name: Pull Required Containers
+      become_user: root
+      shell: |
+              kubeadm config images pull
+
+    - name: Initialize Kubernetes Cluster"
+      shell: |
+              kubeadm init --apiserver-advertise-address="{{ip_master}}" --pod-network-cidr={{subnet_pod}}
+      register: command_output
+    - debug:
+        var: command_output.stdout_lines
+
+
+    - name: copy admin.conf to $HOME/.kube/config
+      become_user: "{{ansible_user}}"
+      become_method: sudo
+      shell: |
+            sudo mkdir -p "{{ansible_node_path}}/.kube"
+            sudo cp /etc/kubernetes/admin.conf "{{ansible_node_path}}/.kube/config"
+            sudo chown {{ansible_user}}:{{ansible_user}} {{ansible_node_path}}/.kube/config 
+
+    - name: Deploy Calico network"
+      become_user: "{{ansible_user}}"
+      shell: |
+              curl https://docs.projectcalico.org/manifests/calico.yaml -O
+              kubectl apply -f calico.yaml
+
+    - name: Generate and save cluster join command to /joincluster.sh"
+      become_user: "{{ansible_user}}"
+      shell: |
+              kubeadm token create --print-join-command
+      register: join_command
+
+    
+    - name: Local join command to controller node
+      become: false
+      local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+
+    - name: Install packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - nfs-kernel-server
+
+    - name: Get helm executable
+      become_user: "{{ansible_user}}"
+      ansible.builtin.get_url: 
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        mode: '0740'
+        dest: "{{ansible_node_path}}"/get_helm.sh
+
+    - name: Install helm
+      become_user:
+      ansible.builtin.shell:
+        "{{ansible_node_path}}"/get_helm.sh
+
+
+    - name: Get helm executable
+      become_user: "{{ansible_user}}"
+      ansible.builtin.get_url: 
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        mode: '0740'
+        dest: "{{ansible_node_path}}/get_helm.sh"
+
+    - name: Install helm
+      become_user:
+      ansible.builtin.shell:
+        "{{ansible_node_path}}/get_helm.sh"
+
+    
+    - name: Fecth Kube config file
+      become_user: "{{ansible_user}}"
+      ansible.builtin.fetch:
+        src: "{{ansible_node_path}}/.kube/config"
+        dest: "{{ansible_controller_root_path}}/.kube/"
+        flat: yes
+
+
+    
+
+    
+
+
+    
+
+      

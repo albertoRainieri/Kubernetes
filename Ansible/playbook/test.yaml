@@ -1,0 +1,19 @@
+---
+- hosts: "workers"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+
+
+
+  tasks:
+    - name: Install Docker
+      ansible.builtin.apt:
+        name:
+          - iputils-arping
+          - net-tools
+
+        

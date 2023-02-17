@@ -1,0 +1,44 @@
+- hosts: "workers"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+
+  tasks:
+    - name: Include vars
+      include_vars: vars.yaml
+
+
+    - name: Copy Join command
+      become: false
+      copy:
+        src: "{{ansible_controller_path}}/join-command"
+        dest: "{{ansible_node_path}}/join-command.sh"
+
+    - name: Execute Join command
+      ansible.builtin.shell: |
+        chown "{{ansible_user}}":"{{ansible_user}}" "{{ansible_node_path}}/join-command.sh"
+        chmod 744 "{{ansible_node_path}}/join-command.sh"
+        {{ansible_node_path}}/join-command.sh
+
+    
+    - name: Apt Update
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Apt Install
+      apt:
+        name: "{{packages}}"
+        state: present
+      vars:
+        packages:
+        - net-tools
+        - nfs-common
+
+      
+      
+
+

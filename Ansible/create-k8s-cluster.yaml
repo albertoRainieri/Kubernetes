@@ -1,0 +1,4 @@
+
+- ansible.builtin.import_playbook: playbook/install-k8s.yaml
+- ansible.builtin.import_playbook: playbook/initialize-cluster.yaml
+- ansible.builtin.import_playbook: playbook/join-cluster.yaml
