@@ -28,7 +28,7 @@ Configure ~/Vagrantfile by deciding how many CPUs, RAM you want to provide to yo
 ### Configure Vars
 Configure ~/playbook/vars.yaml. In this configuration choose the ip address and hostnames (equal to those in Vagrantfile) and paths of your hostmachine and VMs
 
-## Configure Hosts
+### Configure Hosts
 Configure ~/hosts.yaml. This is a symbolic link to /etc/ansible/hosts. It defines hosts, ip addresses, and users
 
 ### Start SSH connections with your VMs
