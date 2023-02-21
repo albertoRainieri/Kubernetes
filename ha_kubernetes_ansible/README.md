@@ -43,7 +43,7 @@ Once Vagrant, Virtualbox and Ansible are installed you can start your HA K8S clu
 vagrant up loadbalancer1 loadbalancer2 kmaster1 kmaster2 kmaster3 kworker1
 
 ### Configure Loadbalancers, master and worker nodes with Ansible
-### OPTION 1. COnfigure one-by-one
+#### Option 1. COnfigure one-by-one
 ```
 ansible-playbook playbook/01-init-loadbalancers.yaml
 ansible-playbook playbook/02-install-k8s.yaml
@@ -52,7 +52,7 @@ ansible-playbook playbook/04-join-master.yaml
 ansible-playbook playbook/05-join-worker.yaml
 ```
 
-### OPTION 2. Configure all together
+#### Option 2. Configure all together
 ```
 ansible-playbook playbook/create-ha-k8s-cluster.yaml
 ```
