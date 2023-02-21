@@ -40,7 +40,9 @@ The template that you find in ~/save_private_keys.sh helps you to do this step. 
 Once Vagrant, Virtualbox and Ansible are installed you can start your HA K8S cluster.
 
 ### Provision your VMs with Vagrant (only for local environments)
+```
 vagrant up loadbalancer1 loadbalancer2 kmaster1 kmaster2 kmaster3 kworker1
+```
 
 ### Configure Loadbalancers, master and worker nodes with Ansible
 #### Option 1. COnfigure one-by-one
