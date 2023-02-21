@@ -12,7 +12,7 @@ For testing purposes, You can create a local enviroment in your hostmachine by c
 ## Table of Contents (Optional)
 
 - [Requirements](#requirements)
-- [Configuration] (#configuration)
+- [Configuration](#configuration)
 - [Installation](#installation)
 
 ## Requirements
