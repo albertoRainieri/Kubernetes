@@ -3,7 +3,7 @@
 # Description
 
 Deploy a HA K8S Cluster with Ansible. In particular the cluster is made of these nodes:
-- 2 LoadBalancers
+- 2 LoadBalancers (HA Proxy)
 - 3 Master Nodes
 - 1 Worker Node
 
