@@ -34,7 +34,7 @@ Configure ~/hosts.yaml. This is a symbolic link to /etc/ansible/hosts. It define
 ### Start SSH connections with your VMs
 In order to let Ansible know how to ssh into your VMs, you should ssh into them in your terminal first.
 
-The template that you find in ~/save_private_keys.sh helps you to do this step. Configure your settings (hostnames, ip addresses, ...) inside the shell script, finally copy and paste the content on your terminal. Ansible is now able to ssh into them.
+The template that you find in ~/save_private_keys.sh helps you to do this step. Configure your settings (ip addresses, paths) inside the shell script, finally copy and paste the content on your terminal. Ansible is now able to ssh into them.
 
 # Installation
 Once Vagrant, Virtualbox and Ansible are installed you can start your HA K8S cluster.
