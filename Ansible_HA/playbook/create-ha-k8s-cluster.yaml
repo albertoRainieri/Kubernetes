@@ -1,0 +1,6 @@
+
+- ansible.builtin.import_playbook: 01-init-loadbalancers.yaml
+- ansible.builtin.import_playbook: 02-install-k8s.yaml
+- ansible.builtin.import_playbook: 03-initialize-cluster.yaml
+- ansible.builtin.import_playbook: 04-join-master.yaml
+- ansible.builtin.import_playbook: 05-join-worker.yaml

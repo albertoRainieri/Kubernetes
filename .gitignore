@@ -5,3 +5,5 @@ Ansible_HA/*.log
 Ansible_HA/.vagrant
 Ansible/*.log
 Ansible/.vagrant
+Ansible_HA/playbook/haproxy-eni.yaml
+Ansible_HA/calico.yaml

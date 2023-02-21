@@ -1,0 +1,226 @@
+---
+- hosts: "primary_master, secondary_masters, workers"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+
+  tasks:
+    - name: Include vars
+      ansible.builtin.include_vars:
+        vars.yaml
+
+    - name: Disable and turn off swap
+      shell: |
+              sed -i '/swap/d' /etc/fstab
+              swapoff -a 
+    
+    - name: Stop and Disable firewall
+      shell: |
+              systemctl disable --now ufw
+
+    - name: Enable and Load Kernel modules
+      blockinfile:
+        path: "/etc/modules-load.d/containerd.conf"
+        block: |
+               overlay
+               br_netfilter
+        create: true
+      
+    - name: modprobe
+      shell: |
+              modprobe overlay
+              modprobe br_netfilter
+
+
+    - name: Set system configurations for Kubernetes networking
+      file:
+        path: "/etc/sysctl.d/kubernetes.conf"
+        state: "touch"
+
+    - name: Add Kernel Settings
+      blockinfile:
+        path: "/etc/sysctl.d/kubernetes.conf"
+        block: |
+                net.bridge.bridge-nf-call-iptables = 1
+                net.ipv4.ip_forward = 1
+                net.bridge.bridge-nf-call-ip6tables = 1
+
+    - name: Apply new settings
+      command: sudo sysctl --system
+
+    - name: Apt Update
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      register: command_output
+    - debug:
+        var: command_output
+
+
+    - name: Install packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - curl
+        - gnupg2
+        - software-properties-common
+        - apt-transport-https
+        - ca-certificates
+      
+
+    - name: Add apt-repository for installing containerd
+      block:
+        - name: Update apt
+          become: yes
+          apt:
+            cache_valid_time: 1800
+            update_cache: yes
+          register: command_output
+        - debug:
+            var: command_output
+
+        - name: create directory /etc/apt/keyrings
+          ansible.builtin.file:
+            path: /etc/apt/keyrings
+            state: directory
+            mode: '0755'
+
+        - name: Add an apt signing key for Docker
+          ansible.builtin.shell: |
+                curl -s https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+        - name: Add apt repository for stable version
+          ansible.builtin.shell: |
+                sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+    - name: Force Apt Update
+      apt:
+        update_cache: true
+        force: true
+
+    - name: Install containerd.io
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - containerd.io
+      register: command_output
+    - debug:
+        var: command_output
+
+    - name: Set containerd configuration
+      shell: containerd config default | sudo tee /etc/containerd/config.toml
+
+    - name: Enable SystemdCgroup
+      replace:
+        path: /etc/containerd/config.toml
+        regexp: SystemdCgroup = false
+        replace: SystemdCgroup = true
+
+    - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: containerd
+
+    - name: Enable service httpd and ensure it is not masked
+      systemd:
+        name: containerd
+        enabled: yes
+
+ 
+    - name: Add apt repo for kubernetes
+      shell: |
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - 
+            apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+
+    - name: Apt Update
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Task 7 Install Kubernetes components (kubeadm, kubelet and kubectl)
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - kubeadm
+        - kubelet
+        - kubectl
+      register: command_output
+    - debug:
+        var: command_output
+
+    - name: Hold Package Version (apt-mark hold)
+      dpkg_selections:
+        name: kubeadm
+        selection: hold
+
+    - name: Hold Package Version (apt-mark hold)
+      dpkg_selections:
+        name: kubelet
+        selection: hold
+    
+    - name: Hold Package Version (apt-mark hold)
+      dpkg_selections:
+        name: kubectl
+        selection: hold
+
+    - name: Update /etc/hosts file
+      blockinfile:
+        path: "/etc/hosts"
+        block: |
+              {{ip_kmaster1}}   kmaster1.example.com     kmaster1
+              {{ip_kmaster2}}   kmaster2.example.com     kmaster2
+              {{ip_kmaster3}}   kmaster3.example.com     kmaster3
+              {{ip_kworker1}}  kworker1.example.com    kworker1
+
+    - name: Install Docker
+      block:
+        - name: Update Apt
+          apt:
+            update_cache: true
+            cache_valid_time: 3600
+        
+        - name: Install docker
+          ansible.builtin.apt:
+            state: present
+            name:
+              - docker-ce
+              - docker-ce-cli
+
+        - name: Give permissions to regular user
+          block:
+            - name: Create group Docker
+              ansible.builtin.group:
+                name: docker
+                state: present
+
+            - name: Append User to Docker group
+              ansible.builtin.user:
+                name: "{{ansible_user}}"
+                shell: /bin/bash
+                groups: docker
+                append: yes
+
+            - name: reset ssh connection to allow user changes to affect ansible user
+              ansible.builtin.meta:
+                reset_connection
+
+    - name: Install other tools
+      ansible.builtin.apt:
+        name:
+          - git
+          - net-tools
+          - iputils-arping
+
+    
+
+      

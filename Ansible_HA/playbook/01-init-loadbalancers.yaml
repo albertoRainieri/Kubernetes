@@ -1,0 +1,128 @@
+---
+- hosts: "loadbalancers"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  
+
+  tasks:
+    - name: Include Variables
+      ansible.builtin.include_vars:
+        vars.yaml
+
+
+    - name: apt-get update
+      apt:
+        cache_valid_time: 1800
+        update_cache: yes
+      register: command_output
+    - debug:
+        var: command_output
+  
+    - name: Install Keepalived and haproxy
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - keepalived
+        - haproxy
+
+    - name: Creates directory
+      file:
+        path: /etc/keepalived/
+        state: directory
+
+    - name: Create script checkapiserver.sh
+      block:
+        - name: create dir
+          file:
+            path: /etc/keepalived/
+            state: directory
+
+        - name: create file
+          copy:
+            dest: "/etc/keepalived/checkapiserver.sh"
+            content: |
+                    #!/bin/sh
+
+                    errorExit() {
+                      echo "*** $@" 1>&2
+                      exit 1
+                    }
+
+                    curl --silent --max-time 2 --insecure https://localhost:6443/ -o /dev/null || errorExit "Error GET https://localhost:6443/"
+                    if ip addr | grep -q {{ virtual_ip }}; then
+                      curl --silent --max-time 2 --insecure https://{{ virtual_ip }}:6443/ -o /dev/null || errorExit "Error GET https://{{ virtual_ip }}:6443/"
+                    fi
+                    mode: 0774
+
+    - name: Create configuration keepalived.conf
+      #become_user: "{{ ansible_user  }}"
+      copy:
+        dest: "/etc/keepalived/keepalived.conf"
+        content: |
+                vrrp_script check_apiserver {
+                  script "/etc/keepalived/check_apiserver.sh"
+                  interval 3
+                  timeout 10
+                  fall 5
+                  rise 2
+                  weight -2
+                }
+
+                vrrp_instance VI_1 {
+                    state BACKUP
+                    interface eth1
+                    virtual_router_id 1
+                    priority 100
+                    advert_int 5
+                    authentication {
+                        auth_type PASS
+                        auth_pass mysecret
+                    }
+                    virtual_ipaddress {
+                        {{ virtual_ip }}
+                    }
+                    track_script {
+                        check_apiserver
+                    }
+                  }
+
+    - name: enable keepalived
+      shell: |
+            systemctl enable --now keepalived
+
+    - name: Creates directory haproxy
+      file:
+        path: /etc/haproxy/
+        state: directory
+
+    - name: Create configuration haproxy.cfg
+      #become_user: "{{ ansible_user  }}"
+      copy:
+        dest: "/etc/haproxy/haproxy.cfg"
+        content: |
+              frontend kubernetes-frontend
+                bind *:6443
+                mode tcp
+                option tcplog
+                default_backend kubernetes-backend
+
+              backend kubernetes-backend
+                option httpchk GET /healthz
+                http-check expect status 200
+                mode tcp
+                option ssl-hello-chk
+                balance roundrobin
+                  server {{ host_kmaster1 }} {{ ip_kmaster1 }}:6443 check fall 3 rise 2
+                  server {{ host_kmaster2 }} {{ ip_kmaster2 }}:6443 check fall 3 rise 2
+                  server {{ host_kmaster3 }} {{ ip_kmaster3 }}:6443 check fall 3 rise 2
+
+
+    - name: enable keepalived
+      shell: |
+            systemctl enable haproxy && systemctl restart haproxy

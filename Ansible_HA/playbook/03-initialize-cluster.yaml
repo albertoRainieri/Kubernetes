@@ -1,5 +1,5 @@
 ---
-- hosts: "masters"
+- hosts: "primary_master"
   remote_user: ubuntu
   become: yes
   become_method: sudo
@@ -18,10 +18,14 @@
       become_user: root
       shell: |
               kubeadm config images pull
+      register: command_output
+    - debug:
+        var: command_output.stdout_lines
 
     - name: Initialize Kubernetes Cluster"
       shell: |
-              kubeadm init --apiserver-advertise-address="{{ip_master}}" --pod-network-cidr={{subnet_pod}}
+              kubeadm init --control-plane-endpoint="{{virtual_ip}}:6443" --upload-certs --apiserver-advertise-address={{ip_kmaster1}} --pod-network-cidr={{subnet_pod}}
+
       register: command_output
     - debug:
         var: command_output.stdout_lines
@@ -40,17 +44,47 @@
       shell: |
               curl https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml -O
               kubectl apply -f calico.yaml
+      register: command_output
+    - debug:
+        var: command_output.stdout_lines
 
-    - name: Generate and save cluster join command to /joincluster.sh" as worker
+    - name: Generate and save cluster join command to /joincluster.sh". This is for worker nodes.
       become_user: "{{ansible_user}}"
       shell: |
               kubeadm token create --print-join-command
       register: join_command
-
+    - debug:
+        var: command_output.stdout_lines
     
     - name: Local join command to controller node
       become: false
-      local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+      local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="{{ ansible_controller_path }}/join-command"
+
+
+    - name: Generate and save cluster join command to /joincluster-master.sh" . This is for joining the control-plane
+      #become_user: "{{ansible_user}}"
+      shell: |
+              kubeadm token create --print-join-command > "{{ ansible_node_path }}/joincluster-master.sh"
+              string_to_append="--control-plane --certificate-key $(kubeadm init phase upload-certs --upload-certs | grep -vw -e certificate -e Namespace)"
+              echo $(sed "/kubeadm/s/$/$string_to_append/" {{ ansible_node_path }}/joincluster-master.sh) > "{{ ansible_node_path }}/joincluster-master.sh"
+      
+    # - name: append flag for joining control-plane
+    #   lineinfile:
+    #     path: "{{ansible_node_path}}/joincluster-master.sh"
+    #     backrefs: yes
+    #     regexp: "^(.*kubeadm.*)$"
+    #     line: '\1--control-plane --certificate-key $(kubeadm init phase upload-certs --upload-certs | grep -vw -e certificate -e Namespace)'    
+    #   register: command_output
+    # - debug:
+    #     var: command_output
+
+
+    - name: Fecth joincluster-master.sh from remote
+      become_user: "{{ansible_user}}"
+      ansible.builtin.fetch:
+        src: "{{ ansible_node_path }}/joincluster-master.sh"
+        dest: "{{ ansible_controller_path }}/"
+        flat: yes
 
 
     - name: Install packages
@@ -60,19 +94,6 @@
       vars:
         packages:
         - nfs-kernel-server
-
-    - name: Get helm executable
-      become_user: "{{ansible_user}}"
-      ansible.builtin.get_url: 
-        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-        mode: '0740'
-        dest: "{{ansible_node_path}}"/get_helm.sh
-
-    - name: Install helm
-      become_user:
-      ansible.builtin.shell:
-        "{{ansible_node_path}}"/get_helm.sh
-
 
     - name: Get helm executable
       become_user: "{{ansible_user}}"
@@ -93,6 +114,8 @@
         src: "{{ansible_node_path}}/.kube/config"
         dest: "{{ansible_controller_root_path}}/.kube/"
         flat: yes
+
+    
 
 
     

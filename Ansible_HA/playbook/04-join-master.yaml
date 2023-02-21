@@ -1,0 +1,38 @@
+---
+- hosts: "secondary_masters"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+
+  tasks:
+    - name: Include vars
+      include_vars: vars.yaml
+
+
+    - name: Copy Join command
+      become: false
+      copy:
+        src: "{{ansible_controller_path}}/joincluster-master.sh"
+        dest: "{{ansible_node_path}}/joincluster-master.sh"
+
+
+    - name: join control-plane
+      shell: |
+        chmod u+x "{{ansible_node_path}}/joincluster-master.sh"
+        /bin/sh "{{ansible_node_path}}/joincluster-master.sh"
+    - debug:
+        var: command_output
+
+
+
+    - name: copy admin.conf to $HOME/.kube/config
+      become_user: "{{ansible_user}}"
+      become_method: sudo
+      shell: |
+            sudo mkdir -p "{{ansible_node_path}}/.kube"
+            sudo cp /etc/kubernetes/admin.conf "{{ansible_node_path}}/.kube/config"
+            sudo chown {{ansible_user}}:{{ansible_user}} {{ansible_node_path}}/.kube/config 
+

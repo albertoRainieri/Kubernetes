@@ -1,0 +1,15 @@
+ansible_user: vagrant
+ansible_controller_path: /home/alberto/Kubernetes/vagrant_init/Ansible_HA
+ansible_controller_root_path: /home/alberto
+ansible_node_path: /home/vagrant
+ip_loadbalancer1: 192.168.61.51
+ip_loadbalancer2: 192.168.61.52
+virtual_ip: 192.168.61.100
+ip_kmaster1: 192.168.61.101
+host_kmaster1: kmaster1
+ip_kmaster2: 192.168.61.102
+host_kmaster2: kmaster2
+ip_kmaster3: 192.168.61.103
+host_kmaster3: kmaster3
+ip_kworker1: 192.168.61.201
+subnet_pod: 192.168.62.0/24
