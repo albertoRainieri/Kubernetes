@@ -66,12 +66,12 @@
       ansible.builtin.get_url: 
         url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
         mode: '0740'
-        dest: "{{ansible_node_path}}"/get_helm.sh
+        dest: "{{ansible_node_path}}/get_helm.sh"
 
     - name: Install helm
       become_user:
       ansible.builtin.shell:
-        "{{ansible_node_path}}"/get_helm.sh
+        "{{ansible_node_path}}/get_helm.sh"
 
 
     - name: Get helm executable

@@ -1,5 +1,5 @@
 ansible_user: vagrant
-ansible_controller_path: /home/alberto/Kubernetes/vagrant_init/Ansible_HA
+ansible_controller_path: /home/alberto/Kubernetes/vagrant_init/kubernetes_ansible
 ansible_controller_root_path: /home/alberto
 ansible_node_path: /home/vagrant
 ip_master: 192.168.59.100

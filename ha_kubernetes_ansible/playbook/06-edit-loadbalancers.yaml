@@ -1,0 +1,40 @@
+---
+- hosts: "loadbalancers"
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  
+
+  tasks:
+    - name: Include Variables
+      ansible.builtin.include_vars:
+        vars.yaml
+
+    - name: Modify configuration haproxy.cfg by adding the second/third node
+      #become_user: "{{ ansible_user  }}"
+      copy:
+        dest: "/etc/haproxy/haproxy.cfg"
+        content: |
+              frontend kubernetes-frontend
+                bind *:6443
+                mode tcp
+                option tcplog
+                default_backend kubernetes-backend
+
+              backend kubernetes-backend
+                option httpchk GET /healthz
+                http-check expect status 200
+                mode tcp
+                option ssl-hello-chk
+                balance roundrobin
+                  server {{ host_kmaster1 }} {{ ip_kmaster1 }}:6443 check fall 3 rise 2
+                  server {{ host_kmaster2 }} {{ ip_kmaster2 }}:6443 check fall 3 rise 2
+                  # server {{ host_kmaster3 }} {{ ip_kmaster3 }}:6443 check fall 3 rise 2
+
+
+    - name: enable keepalived
+      shell: |
+            systemctl enable haproxy && systemctl restart haproxy
