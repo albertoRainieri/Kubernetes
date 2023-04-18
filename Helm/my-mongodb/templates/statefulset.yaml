@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.service.name}}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.service.labels }}
+  serviceName: mongo
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.labels }}
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: {{ .Values.service.name }}
+        # command: 
+        # - "/bin/sh"
+        # - "-c"
+        # - "/etc/config/all_nodes.sh"
+        command:
+          - "/bin/sh"
+          - "-c"
+          #- "mongod --replSet=rs0 --bind_ip_all"
+          - "mongod --config /etc/config/mongod.conf"
+        env:
+          - name: SERVICE
+            value: {{ .Values.service.name }}
+          - name: MONGO_PREFIX
+            value: {{ .Values.service.name }}
+          - name: REPLICASET_NAME
+            value: {{ .Values.replicaset.name }}
+        user: "nfsnobody"        
+        image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+        ports:
+          - containerPort: 27017
+        volumeMounts:
+        - name: datadir
+          mountPath: /data/db
+        - name: mongo-config
+          mountPath: /etc/config/
+
+      volumes:
+        - name: mongo-config
+          configMap:
+            name: mongo-config
+            defaultMode: 0775
+        #     items:
+        #       - key: first-command.sh
+        #       - path: first-command.sh
+            
+  volumeClaimTemplates:
+    - metadata:
+        name: datadir
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: nfs-client

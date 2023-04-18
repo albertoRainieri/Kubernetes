@@ -1,0 +1,3 @@
+
+- ansible.builtin.import_playbook: 02-install-k8s.yaml
+- ansible.builtin.import_playbook: 04-join-master.yaml

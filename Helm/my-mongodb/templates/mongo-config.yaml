@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-config
+data:
+  mongod.conf: |
+    replication:
+      replSetName: {{ .Values.replicaset.name }}
+    net:
+      #bindIp: localhost,mongo-0.mongo.default.svc.cluster.local:27017,mongo-1.mongo.default.svc.cluster.local:27017,mongo-2.mongo.default.svc.cluster.local:27017
+      bindIp: 0.0.0.0
+
+  create-replicaset-config.py: |
+    import os, json
+    replicaset_name=os.getenv("REPLICASET_NAME")
+    replica_count=int(os.getenv("REPLICASET_COUNT"))
+    pod_prefix=os.getenv("POD_PREFIX")
+    service=os.getenv("SERVICE")
+
+    members=[]
+    for i in range(replica_count):
+      host = pod_prefix + "-" + str(i) + "." + service + ".default.svc.cluster.local:27017"
+      member= {"_id": i, "host": host}
+      members.append(member)
+
+    config={
+      "_id": replicaset_name,
+      "members": members
+            }
+
+    print(f'This is the config file {config}')
+    with open('/tmp/config.conf', 'w') as convert_file:
+      convert_file.write(json.dumps(config))
+
+
+  entrypoint.sh: |
+    apt-get update
+    apt-get -y install python3
+    python3 /etc/config/create-replicaset-config.py
+    primary_host="mongo-0.mongo.default.svc.cluster.local:27017"
+    cmd=$(cat /tmp/config.conf)
+    echo 'this is the cmd: \n' $cmd
+    mongo --host $primary_host --eval "rs.initiate($cmd)"
+
+
+  all_nodes.sh: |
+    #!/bin/bash
+    mongod --bind_ip_all --replSet rs0

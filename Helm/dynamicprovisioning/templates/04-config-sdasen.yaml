@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-sdasen
+data:
+  # property-like keys; each key maps to a simple value
+  HOST_MASTER: 192.168.59.100
+  ME_CONFIG_SITE_BASEURL: "/mongo"
+  DATABASE_DATA_STORAGE: "DataStorage"
+  DATABASE_SESSIONS: "Sessions"
+  MONGO_DB_URL: "mongodb"
+  MONGO_DB_NAME: "SDaSEn"
+  MONGO_PORT: "27017"
+  MONGO_VERSION: "5.0.9"
+  ICON_FREQUENCY: "15"
+  MQTT_BROKER_HOSTNAME: "communication-system-internal"
+  MQTT_BROKER_PORT: "1883"
+  MQTT_BROKER_PORT_SSL: "8883"
+  PUID: "1000"
+  PGID: "1000"
+  LOCAL_CONTROLLER_FREQUENCY: "10"
+  RECORD_FREQUENCY: "10"
+  N_DEVICES: "1"
+  DELTA_M: "1"
+  DELTA_O: "60"
+  SESSION_INTERVAL: "10m"
+  ENERGY_COST: "0.2"
+  A_PERIOD: "1"
+  E_KWH: "3"
+  D_KWH: "0"
+  F_D_KWH: "3"
+  F_U_KWH: "3"
