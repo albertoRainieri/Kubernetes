@@ -5,7 +5,7 @@ metadata:
   labels:
     app: nfs-client-provisioner
   # replace with namespace where provisioner is deployed
-  namespace: default
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   strategy:
@@ -30,14 +30,8 @@ spec:
               value: k8s-sigs.io/nfs-subdir-external-provisioner
             - name: NFS_PATH
               value: /var/nfs/general
-              
-            - name: HOST_MASTER
-              valueFrom:
-                configMapKeyRef:
-                  name: config-sdasen
-                  key: HOST_MASTER
             - name: NFS_SERVER
-              value: $(HOST_MASTER)
+              value: 192.168.59.100
       volumes:
         - name: nfs-client-root
           nfs:
