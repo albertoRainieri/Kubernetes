@@ -3,7 +3,7 @@
 master=192.168.59.100
 worker1=192.168.59.111
 worker2=192.168.59.112
-path=$HOME/Kubernetes/vagrant_init/kubernetes_ansible
+path=$HOME/Kubernetes/vagrant_init/Deployment/kubernetes_ansible
 root_path=/home/alberto
 
 ssh-keygen -f "$root_path/.ssh/known_hosts" -R $master

@@ -14,7 +14,7 @@
     - name: Copy Join command
       become: false
       copy:
-        src: "{{ansible_controller_path}}/join-command"
+        src: "{{ansible_controller_path}}/playbook/join-command"
         dest: "{{ansible_node_path}}/join-command.sh"
 
     - name: Execute Join command

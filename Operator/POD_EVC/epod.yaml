@@ -1,0 +1,30 @@
+apiVersion: kopf.dev/v1
+kind: Ephemeralpod
+metadata:
+  name: epod-test
+  labels:
+    epod: epod-test
+spec:
+  create_only_pod: "no"
+  volumes:
+    - name: epod-volume
+      persistentVolumeClaim:
+        claimName: epod-claim
+        pv-size: 1G
+        storageClassName: nfs-client
+  containers:
+    - name: epod-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      resources:
+        requests:
+          memory: 32Mi
+          cpu: 50m
+        limits:
+          memory: 128Mi
+          cpu: 100m
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: epod-volume
