@@ -17,7 +17,6 @@ These are the requirements to install the dynamic volume provisioner in K8S.
 1) K8S cluster up and running
 
 # Configuration
-### Configure Vagrantfile
 
 Modify the field "namespace" in values.yaml
 
