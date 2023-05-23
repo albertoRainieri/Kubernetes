@@ -1,0 +1,13 @@
+# Default values for dynamicprovisioning.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: test
+storageclass: test-sc
+sa_name: test-sa
+clusterrole_name: test-clusterrole
+clusterrolebinding_name: test-clusterrolebinding
+role_name: test-role
+rolebinding_name: test-rolebinding
+nfs_path: /var/nfs/general
+nfs_server: 192.168.59.100

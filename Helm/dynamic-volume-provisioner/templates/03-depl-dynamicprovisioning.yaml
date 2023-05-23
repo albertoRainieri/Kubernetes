@@ -18,7 +18,7 @@ spec:
       labels:
         app: nfs-client-provisioner
     spec:
-      serviceAccountName: nfs-client-provisioner
+      serviceAccountName: {{ .Values.sa_name }}
       containers:
         - name: nfs-client-provisioner
           image: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
@@ -29,11 +29,11 @@ spec:
             - name: PROVISIONER_NAME
               value: k8s-sigs.io/nfs-subdir-external-provisioner
             - name: NFS_PATH
-              value: /var/nfs/general
+              value: {{ .Values.nfs_path }}
             - name: NFS_SERVER
-              value: 192.168.59.100
+              value: {{ .Values.nfs_server }}
       volumes:
         - name: nfs-client-root
           nfs:
-            server: 192.168.59.100
-            path: /var/nfs/general
+            server: {{ .Values.nfs_server }}
+            path: {{ .Values.nfs_path }}
