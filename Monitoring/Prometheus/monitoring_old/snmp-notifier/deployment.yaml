@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snmp-notifier
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: snmp-notifier
+  template:
+    metadata:
+      name: snmp-notifier
+      labels:
+        app: snmp-notifier
+    spec:
+      imagePullSecrets:
+      - name: reg-cred-secret
+      containers:
+      - name: snmp-notifier
+        image: docker-registry:5000/snmp_notifier:v3.1
+        envFrom:
+          - configMapRef:
+              name: snmp-notifier-configmap
+        command: ["/bin/snmp_notifier"]
+        args: ["--snmp.trap-description-template=$(SNMP_TRAP_DESCRIPTION_TEMPLATE)",
+               "--web.listen-address=:$(WEB_LISTEN_ADDRESS)",
+               "--alert.severity-label=$(ALERT_SEVERITY_LABEL)",
+               "--alert.severities=$(ALERT_SEVERITIES)",
+               "--alert.default-severity=$(ALERT_DEFAULT_SEVERITY)",
+               "--snmp.version=$(SNMP_VERSION)",
+               "--snmp.destination=$(SNMP_DESTINATION)",
+               "--snmp.retries=$(SNMP_RETRIES)",
+               "--snmp.trap-oid-label=$(SNMP_TRAP_OID_LABEL)",
+               "--snmp.trap-default-oid=$(SNMP_TRAP_DEFAULT_OID)",
+               "--snmp.timeout=$(SNMP_TIMEOUT)",
+               "--snmp.community=$(SNMP_COMMUNITY)",
+               "--log.level=$(LOG_LEVEL)",
+               "--log.format=$(LOG_FORMAT)"]
+        ports:
+        - name: snmp-notifier
+          containerPort: 3000
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+          requests: 
+            memory: 500M
+            cpu: "500m"

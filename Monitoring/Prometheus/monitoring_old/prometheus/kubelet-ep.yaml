@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: prometheus-operator
+    app.kubernetes.io/name: kubelet
+    k8s-app: kubelet
+  name: kubelet
+  namespace: kube-system
+subsets:
+- addresses:
+  - ip: 10.110.158.112
+    targetRef:
+      kind: Node
+      name: t4srv100xo.ad04.eni.intranet
+  - ip: 10.110.158.111
+    targetRef:
+      kind: Node
+      name: t4srv100xp.ad04.eni.intranet
+  - ip: 10.110.158.79
+    targetRef:
+      kind: Node
+      name: t4srv100y0.ad04.eni.intranet
+  - ip: 10.110.158.77
+    targetRef:
+      kind: Node
+      name: t4srv100y1.ad04.eni.intranet
+  - ip: 10.110.158.75
+    targetRef:
+      kind: Node
+      name: t4srv100y2.ad04.eni.intranet
+  - ip: 10.110.158.73
+    targetRef:
+      kind: Node
+      name: t4srv100y3.ad04.eni.intranet
+  - ip: 10.110.158.71
+    targetRef:
+      kind: Node
+      name: t4srv100y4.ad04.eni.intranet
+  - ip: 10.110.157.227
+    targetRef:
+      kind: Node
+      name: t4srv100zh.ad04.eni.intranet
+  - ip: 10.110.157.226
+    targetRef:
+      kind: Node
+      name: t4srv100zi.ad04.eni.intranet
+  ports:
+  - name: https-metrics
+    port: 10250
+    protocol: TCP
+  - name: http-metrics
+    port: 10255
+    protocol: TCP
+  - name: cadvisor
+    port: 4194
+    protocol: TCP
+
+

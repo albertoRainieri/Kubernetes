@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs-pv1
+spec:
+  storageClassName: edrilling-sc
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi

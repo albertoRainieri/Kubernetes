@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: prometheus-operator
+    app.kubernetes.io/name: kube-scheduler
+    k8s-app: kube-scheduler
+  name: kube-scheduler
+  namespace: kube-system
+subsets:
+- addresses:
+  - ip: 10.110.158.112
+    targetRef:
+      kind: Node
+      name: t4srv100xo.ad04.eni.intranet
+  - ip: 10.110.158.111
+    targetRef:
+      kind: Node
+      name: t4srv100xp.ad04.eni.intranet
+  - ip: 10.110.158.79
+    targetRef:
+      kind: Node
+      name: t4srv100y0.ad04.eni.intranet
+  ports:
+  - name: https-metrics
+    port: 10259
+    protocol: TCP

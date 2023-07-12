@@ -1,0 +1,136 @@
+Deploy Prometheus/AlertManager/snmp-notifier
+
+1) creare ns monitoring
+
+2) applicare quote al ns con ResourceQuota-monitoring.yaml
+
+3) creare storage-class
+	kubectl apply -f 01-rbac.yaml -n monitoring
+	vim 02-deployment.yaml (nome dello storage e share NFS)
+	kubectl apply -f 02-deployment.yaml -n monitoring
+	vim 03-class.yaml (nome della classe)
+
+4) deploy prometheus
+	kubectl apply -f serviceaccount.yaml -n monitoring
+	kubectl apply -f clusterRole.yaml -n monitoring
+	vim config-map.yaml (modificare nome ambiente)
+	kubectl apply -f config-map.yaml -n monitoring
+	vim prometheus-pvc.yaml (dimensione PV)
+	kubectl apply -f prometheus-pvc.yaml -n monitoring
+	kubectl apply -f prometheus-deployment.yaml -n monitoring
+	vim kube-controller-manager-ep.yaml (inserire IP e nomi dei master nodes)
+	kubectl apply -f kube-controller-manager-ep.yaml -n kube-system
+	kubectl apply -f kube-controller-manager-service.yaml -n kube-system
+	vim /etc/kubernetes/manifests/kube-controller-manager.yaml	(modificare bind-address: --bind-address=0.0.0.0, eseguire su tutti i master)
+	uccidere il pod kube-controller-manager su ciascun master, in sequenza; se non risale, far ripartire kubelet
+		systemctl restart kubelet
+	vim kube-scheduler-ep.yaml (inserire IP e nomi dei master nodes)
+	kubectl apply -f kube-scheduler-ep.yaml -n kube-system
+	kubectl apply -f kube-scheduler-service.yaml -n kube-system
+	vim /etc/kubernetes/manifests/kube-scheduler.yaml	(modificare bind-address: --bind-address=0.0.0.0, eseguire su tutti i master)
+		uccidere il pod kube-scheduler su ciascun master, in sequenza; se non risale, far ripartire kubelet
+		systemctl restart kubelet
+	vim kubelet-ep.yaml (inserire IP e nomi di tutti i nodi del cluster)
+	kubectl apply -f kubelet-ep.yaml -n kube-system
+	kubectl apply -f kubelet-service.yaml -n kube-system
+	vim /var/lib/kubelet/config.yaml
+		authentication:
+			anonymous:
+				enabled: true
+			token:
+				webhook:
+					enabled: true
+			webhook:
+				cacheTTL: 0s
+				enabled: true
+			x509:
+				clientCAFile: /etc/kubernetes/pki/ca.crt
+	systemctl restart kubelet (su tutti i nodi del cluster)
+	kubectl apply -f prometheus-service.yaml -n monitoring
+	verificare Servizio Prometheus up: http://<master_node>.ad04.eni.intranet:30000/
+
+5) deploy state-metrics
+	kubectl apply -f service-account.yaml -n kube-system
+	kubectl apply -f cluster-role.yaml -n kube-system
+	kubectl apply -f cluster-role-binding.yaml -n kube-system
+	kubectl apply -f deployment.yaml -n kube-system
+	kubectl apply -f service.yaml -n kube-system
+	
+6) deploy node-exporter
+	kubectl apply -f daemonset.yaml -n monitoring
+	kubectl apply -f service.yaml -n monitoring
+	
+7) deploy AlertManager
+	vim AlertManagerConfigmap.yaml (modificare url webhook per invio trap SNMP)
+	kubectl apply -f AlertManagerConfigmap.yaml -n monitoring
+	kubectl apply -f AlertTemplateConfigMap.yaml -n monitoring
+	kubectl apply -f Deployment.yaml -n monitoring
+	kubectl apply -f Service.yaml -n monitoring
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	verificare Servizio AlertManager up: http://<master_node>.ad04.eni.intranet:31000/
+	
+8) deploy docker-registry
+	mkdir -p /appl/yaml/registry
+	cd /appl/yaml/registry
+	mkdir -p certs auth
+	openssl req -x509 -newkey rsa:4096 -days 365 -nodes -sha256 -keyout certs/tls.key -out certs/tls.crt -subj "/CN=docker-registry"
+	docker run --rm --entrypoint htpasswd registry:2.6.2 -Bbn user passwd > auth/htpasswd
+	kubectl create ns registry
+	kubectl create secret tls certs-secret --cert=certs/tls.crt --key=certs/tls.key -n registry
+	kubectl create secret generic auth-secret --from-file=auth/htpasswd -n registry
+	kubectl apply -f registry-pv.yaml -n registry
+	kubectl apply -f registry-deployment.yaml -n registry
+	kubectl get all -n registry
+	(ricordare il CLUSTER-IP per il prossimo comando)
+	(da tundra) for i in xs xt xw xx xy xz zg; do echo $i; ssh t4srv100$i 'echo "10.100.182.58   docker-registry" >> /etc/hosts'; done
+	(da tundra) cd /tmp; scp t4srv100xw:/appl/yaml/registry/certs/tls.crt .
+	(da tundra) for i in xs xt xw xx xy xz zg; do echo $i; ssh t4srv100$i mkdir -p /etc/docker/certs.d/docker-registry:5000; scp tls.crt t4srv100$i:/etc/docker/certs.d/docker-registry:5000/ca.crt; done
+	(test login) docker login docker-registry:5000 -u user -p passwd
+	
+9) deploy snmp-notifier
+	docker build -t snmp_notifier:v3.1 .
+	docker tag snmp_notifier:v3.1 docker-registry:5000/snmp_notifier:v3.1
+	verifica che l'immagine sia localmente disponibile
+		docker image ls
+	docker push docker-registry:5000/snmp_notifier:v3.1
+	vim configmap.yaml (modifica indirizzo SNMP_DESTINATION)
+	kubectl apply -f configmap.yaml -n monitoring
+	kubectl create secret docker-registry reg-cred-secret --docker-server=docker-registry:5000 --docker-username=user --docker-password=passwd -n monitoring
+	kubectl apply -f deployment.yaml -n monitoring
+	kubectl apply -f service.yaml -n monitoring
+	verificare Servizio snmp-notifier up: http://<master_node>.ad04.eni.intranet:32500/
+	
+
+	

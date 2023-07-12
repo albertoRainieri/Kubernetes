@@ -1,0 +1,13 @@
+# Default values for dynamicprovisioning.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: jenkins
+storageclass: jenkins-sc
+sa_name: jenkins-sa
+clusterrole_name: jenkins-clusterrole
+clusterrolebinding_name: jenkins-clusterrolebinding
+role_name: jenkins-role
+rolebinding_name: jenkins-rolebinding
+nfs_path: /var/nfs/general
+nfs_server: 192.168.59.100

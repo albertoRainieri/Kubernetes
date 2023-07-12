@@ -1,0 +1,83 @@
+Creazione e impostazione dell'NFS-client-provisioner e della storageClass per un namespace (k8s)
+================================================================================================
+
+
+1) Impostare parametro (feature-gate) su kube-apiserver
+
+   - modificare /etc/kubernetes/manifests/kube-apiserver.yaml
+     aggiungere "- --feature-gates=RemoveSelfLink=false" sotto "- kube-apiserver" (non importa l'ordine)
+
+   - riavviare il kube-apiserver con 
+     kubectl apply -f /etc/kubernetes/manifests/kube-apiserver.yaml
+
+   - controllare stato con
+     kubectl get pods -n kube-system
+   - se viene creato un pod "kube-apiserver" che va poi in crash eliminarlo con
+     kubectl delete pod kube-apiserver -n kube-system
+   - l'importante è che il pod kube-apiserver del master su cui si opera si riavvii (controllare colonna del tempo di esecuzione)
+
+   - Questa operazione va fatta su ciascuno del Master del cluster
+
+
+2) Montare la share di rete per la storageClass almeno sui nodi worker
+
+   - modificare /etc/fstab come segue (adattando)
+     <nfs server>:/<volume>/<path>     /storageclasses/<storageclass-name>      nfs     rw,soft,bg,nfsvers=3,_netdev,tcp        0       0
+
+   - creare mount path
+     mkdir -p /storageclasses/<storageclass>
+
+   - montare la share NFS
+     mount /storageclasses/<storageclass>
+
+
+3) Modificare i file di deploy e creare la classe
+
+   - in 01-rbac.yaml modificare i riferimenti al namespace (ce ne sono due)
+     applicare con 
+     kubectl apply -f 01-rbac.yaml -n <namespace>
+
+   - in 02-deployment.yaml modificare i parametri sotto spec/containers/env e spec/volumes/nfs con i dati della share NFS assegnata
+     e il nome del provisioner (consigliato: nfs.<namespace>-<ambiente>)
+     applicare con 
+     kubectl apply -f 02-deployment.yaml -n <namespace>
+
+   - in 03-class.yaml modificare il nome della storageClass e il provisioner
+     applicare con 
+     kubectl apply -f 03-class.yaml -n <namespace>
+
+
+4) testare la funzionalità della storageClass
+
+   - in 04-pvc.yaml (test della storage class, parte 1) modificare il nome della storageClass da usare, il nome del volume claim e la dimensione
+     applicare con 
+     kubectl apply -f 04-pvc.yaml -n <namespace>
+     verificare con 
+     kubectl get pvc -A
+     kubectl get pv -A
+
+   - in 05-pod.yaml (test della storage class, parte 2) non servono modifiche
+     applicare con
+     kubectl apply -f 05-pod.yaml -n <namespace>
+
+   - verificare che il pod sia up&running con 
+     kubectl get pods -n <namespace>
+
+   - pulire con
+     kubectl delete -f 05-pod.yaml -n <namespace>
+     kubectl delete -f 04-pvc.yaml -n <namespace>
+
+
+5) Impostare la storageClass come default
+
+   - modificare in 99-default-sc.yaml il nome della storageClass
+
+   - applicare con
+     kubectl apply -f 99-default-sc
+
+   - verificare con
+     kubectl get storageclasses
+     deve avere indicazione "(default)" dopo il nome
+
+   - eseguire solo per una storageClass per cluster (di solito non usata)
+
