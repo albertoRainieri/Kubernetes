@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: {{ .Values.service.name }}
+ labels:
+   app: {{ .Values.service.labels }}
+spec:
+ ports:
+ - name: mongo
+   port: 27017
+   targetPort: 27017
+ clusterIP: None
+ selector:
+   app: {{ .Values.service.labels }}

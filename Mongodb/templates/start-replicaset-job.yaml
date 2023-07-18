@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+ name: init-mongodb-replicaset
+ namespace: {{ .Values.namespace }}
+ annotations:
+   # This is what defines this resource as a hook. Without this line, the
+   # job is considered part of the release.
+   "helm.sh/hook": post-install
+   #"helm.sh/hook-weight": "-5"
+   "helm.sh/hook-delete-policy": hook-failed,before-hook-creation,hook-succeded
+spec:
+ template:
+   metadata:
+     name: init-mongodb-replicaset
+   spec:
+     containers:
+     - name: mongodb
+       image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+       command:
+         - "/bin/sh"
+         - "-c"
+         - "/etc/config/entrypoint.sh"
+       env:
+         - name: REPLICASET_NAME
+           value: {{ .Values.replicaset.name }}
+         - name: REPLICASET_COUNT
+           value: "{{ .Values.replicaCount }}"
+         - name: POD_PREFIX
+           value: {{ .Values.service.name }}
+         - name: SERVICE
+           value: {{ .Values.service.name }}
+         - name: NAMESPACE
+           value: {{ .Values.namespace }}
+       # env:
+       # - name: MONGO_HOST
+       #   value: mongodb.default.svc.cluster.local
+       # - name: MONGO_PORT
+       #   value: "27017"
+       volumeMounts:
+       - name: mongo-config
+         mountPath: /etc/config/
+     restartPolicy: OnFailure
+     volumes:
+       - name: mongo-config
+         configMap:
+           name: mongo-config
+           defaultMode: 0775
+ backoffLimit: 5

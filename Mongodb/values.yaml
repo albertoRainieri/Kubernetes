@@ -1,0 +1,22 @@
+replicaset:
+ name: rs0
+
+
+service:
+ name: mongo
+ type: ClusterIP
+ port: 27017
+ labels: mymongo
+
+
+replicaCount: "3"
+
+
+image:
+ name: mongo
+ pullPolicy: IfNotPresent
+ # Overrides the image tag whose default is the chart appVersion.
+ tag: "4.4.6"
+
+storageClass: nfs
+namespace: mongodb
